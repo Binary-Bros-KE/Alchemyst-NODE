@@ -429,85 +429,74 @@ router.get('/location/:county/:location', asyncHandler(async (req, res) => {
     }
 }));
 
-// Get single profile by ID - FIXED VERSION
-router.get('/:id', asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    console.log(`=== GET /profiles/${id} - START ===`);
+// Get single profile by userType and ID (for React component)
+router.get('/:userType/:id', asyncHandler(async (req, res) => {
+  const { userType, id } = req.params;
+  console.log(`=== GET /profiles/${userType}/${id} - START ===`);
 
-    try {
-        // Search across all models
-        const models = [
-            { model: Escort, type: 'escort' },
-            { model: Masseuse, type: 'masseuse' },
-            { model: OFModel, type: 'of-model' },
-            { model: Spa, type: 'spa' }
-        ];
-
-        let profile = null;
-        let userType = null;
-
-        console.log('Searching for profile across all models...');
-
-        for (const { model, type } of models) {
-            console.log(`Checking ${type} model...`);
-            const foundProfile = await model.findById(id)
-                .select('-password -paymentHistory -processedTransactions')
-                .lean();
-
-            if (foundProfile) {
-                console.log(`Profile found in ${type} model`);
-                profile = foundProfile;
-                userType = type;
-                break;
-            }
-        }
-
-        if (!profile) {
-            console.log('Profile not found in any model');
-            return res.status(404).json({
-                success: false,
-                message: 'Profile not found'
-            });
-        }
-
-        // Check if profile is active and has active package
-        if (!profile.isActive || profile.currentPackage?.status !== 'active') {
-            console.log('Profile is not active or does not have active package');
-            return res.status(404).json({
-                success: false,
-                message: 'Profile not available'
-            });
-        }
-
-        profile.userType = userType;
-
-        // Increment profile views
-        console.log('Incrementing profile views for single profile...');
-        await incrementProfileViews(id, userType);
-
-        console.log(`=== GET /profiles/${id} - SUCCESS ===`);
-        res.json({
-            success: true,
-            data: profile
-        });
-
-    } catch (error) {
-        console.error(`=== GET /profiles/${id} - ERROR ===`);
-        console.error('Profile fetch error:', error);
-
-        if (error.name === 'CastError') {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid profile ID'
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch profile',
-            error: error.message
-        });
+  try {
+    const Model = getModelByType(userType);
+    
+    if (!Model) {
+      console.log(`Invalid userType: ${userType}`);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user type'
+      });
     }
+
+    console.log(`Searching for ${userType} profile with ID: ${id}`);
+    
+    const profile = await Model.findById(id)
+      .select('-password -paymentHistory -processedTransactions -emailVerificationCode -emailVerificationExpires')
+      .lean();
+
+    if (!profile) {
+      console.log('Profile not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Profile not found'
+      });
+    }
+
+    // Check if profile is active and has active package
+    if (!profile.isActive || profile.currentPackage?.status !== 'active') {
+      console.log('Profile is not active or does not have active package');
+      return res.status(404).json({
+        success: false,
+        message: 'Profile not available'
+      });
+    }
+
+    profile.userType = userType;
+
+    // Increment profile views
+    console.log('Incrementing profile views for single profile...');
+    await incrementProfileViews(id, userType);
+
+    console.log(`=== GET /profiles/${userType}/${id} - SUCCESS ===`);
+    res.json({
+      success: true,
+      data: profile
+    });
+
+  } catch (error) {
+    console.error(`=== GET /profiles/${userType}/${id} - ERROR ===`);
+    console.error('Profile fetch error:', error);
+
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid profile ID'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch profile',
+      error: error.message
+    });
+  }
 }));
 
 // Helper function to increment profile views - FIXED VERSION
