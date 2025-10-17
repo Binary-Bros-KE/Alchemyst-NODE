@@ -66,7 +66,7 @@ const ofModelSchema = new mongoose.Schema({
     type: String,
     default: '',
     trim: true,
-    maxlength: 200
+    maxlength: 400
   },
 
 

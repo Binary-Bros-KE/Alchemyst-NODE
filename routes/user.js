@@ -241,7 +241,7 @@ router.get('/profile', authenticateToken, asyncHandler(async (req, res) => {
 
 // Update personal information
 router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
-  const { username, gender, sexualOrientation, age, nationality, serviceType, bio, breastSize, bodyType, servesWho, ethnicity } = req.body;
+  const { username, gender, sexualOrientation, age, nationality, serviceType, bio, breastSize, bodyType, servesWho, ethnicity, providesEroticServices  } = req.body;
 
   const user = req.user;
   const userType = req.userType;
@@ -286,6 +286,8 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
     if (bodyType !== undefined) updateData.bodyType = bodyType;
     if (servesWho !== undefined) updateData.servesWho = servesWho;
     if (ethnicity !== undefined) updateData.ethnicity = ethnicity;
+    if (providesEroticServices !== undefined) updateData.providesEroticServices = providesEroticServices;
+
 
     // Check if username is being changed and if it's already taken
     if (username && username !== user.username) {
@@ -354,6 +356,7 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
         ethnicity: updatedUser.ethnicity,
         userType: userType,
         isActive: updatedUser.isActive, // This will now reflect the calculated value
+        providesEroticServices: updatedUser.providesEroticServices,
       }
     });
 
@@ -2030,7 +2033,6 @@ router.patch('/services/:serviceId/status', authenticateToken, asyncHandler(asyn
   const { serviceId } = req.params;
   const { isActive } = req.body;
 
-  console.log(`isActive`, isActive);
 
   const user = req.user;
   const userType = req.userType;
@@ -2162,7 +2164,6 @@ router.post('/verification/request', authenticateToken, asyncHandler(async (req,
       { new: true }
     ).select('-password');
 
-    console.log(`Verification requested by user: ${user.username} (${user._id})`);
 
     res.json({
       success: true,

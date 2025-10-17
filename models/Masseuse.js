@@ -19,14 +19,6 @@ const masseuseSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  breastSize: {
-    type: String,
-    trim: true
-  },
-  bodyType: {
-    type: String,
-    trim: true
-  },
   servesWho: {
     type: String,
     trim: true
@@ -67,8 +59,13 @@ const masseuseSchema = new mongoose.Schema({
     type: String,
     default: '',
     trim: true,
-    maxlength: 200
+    maxlength: 400
   },
+  providesEroticServices: {
+    type: Boolean,
+    default: false
+  },
+
 
 
 
@@ -406,7 +403,7 @@ const masseuseSchema = new mongoose.Schema({
 
 
 
-  
+
 
   // Timestamps
   createdAt: {

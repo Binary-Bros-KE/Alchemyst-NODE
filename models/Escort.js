@@ -65,7 +65,7 @@
       type: String,
       default: '',
       trim: true,
-      maxlength: 200
+      maxlength: 400
     },
 
 
