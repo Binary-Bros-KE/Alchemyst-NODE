@@ -23,35 +23,12 @@ const spaSchema = new mongoose.Schema({
     type: String,
     default: '',
     trim: true,
-    maxlength: 200
+    maxlength: 500
   },
   serviceType: {
     type: String,
     trim: true
   },
-  
-
-
-  
-
-
-
-  // 2===================== Business profile fields
-  business: {
-    businessName: String,
-    businessType: String, // Spa, Massage Parlor, Wellness Center, etc.
-    description: String,
-    phone: String,
-    address: {
-      street: String,
-      city: String,
-      state: String,
-      zipCode: String
-    },
-    logo: String,
-    photos: [String]
-  },
-
 
 
 
@@ -272,6 +249,10 @@ const spaSchema = new mongoose.Schema({
       type: String,
       trim: true
     },
+    secondaryPhone: {
+      type: String,
+      trim: true
+    },
     hasWhatsApp: {
       type: Boolean,
       default: false
@@ -423,7 +404,7 @@ const spaSchema = new mongoose.Schema({
 
 
 
-  
+
 
 
 
@@ -445,7 +426,5 @@ const spaSchema = new mongoose.Schema({
 // Indexes
 spaSchema.index({ email: 1 });
 spaSchema.index({ username: 1 });
-spaSchema.index({ 'business.businessName': 1 });
-spaSchema.index({ 'business.address.city': 1 });
 
 module.exports = mongoose.model('Spa', spaSchema);

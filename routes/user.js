@@ -220,7 +220,6 @@ router.get('/profile', authenticateToken, asyncHandler(async (req, res) => {
   const shouldBeActive = calculateIsActive(safeUser, userType);
 
   // Update isActive if it has changed (avoid unnecessary DB writes)
-  // In your GET profile route
   if (safeUser.isActive !== shouldBeActive && !safeUser.isDeactivated) {
     safeUser.isActive = shouldBeActive;
     await safeUser.save({ validateBeforeSave: false }); // Skip validation
@@ -272,14 +271,6 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
     });
   }
 
-  // Validate bio length if provided
-  if (bio && bio.length > 200) {
-    return res.status(400).json({
-      success: false,
-      message: 'Bio must be 200 characters or less'
-    });
-  }
-
   try {
     // Build update object with only provided fields
     const updateData = {};
@@ -327,13 +318,21 @@ router.put('/profile', authenticateToken, asyncHandler(async (req, res) => {
       });
     }
 
-    // Recalculate isActive after profile update
+    // Calculate if user should be active based on profile completeness
     const shouldBeActive = calculateIsActive(updatedUser, userType);
 
-    // Update isActive if needed (and user hasn't manually deactivated)
+    // Update isActive if it has changed (avoid unnecessary DB writes)
     if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
       updatedUser.isActive = shouldBeActive;
-      await updatedUser.save({ validateBeforeSave: false });
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
     }
 
     res.json({
@@ -621,6 +620,23 @@ router.post('/upload-image', authenticateToken, upload.single('image'), asyncHan
       { new: true }
     ).select('-password');
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     res.json({
       success: true,
       message: 'Image uploaded successfully',
@@ -729,8 +745,6 @@ router.get('/images', authenticateToken, asyncHandler(async (req, res) => {
 
 
 
-
-
 //5=================== SUBSCRIPTION & PAYMENT ROUTES
 // Package priority for upgrades
 const PACKAGE_PRIORITY = {
@@ -833,6 +847,23 @@ router.post('/subscribe', authenticateToken, asyncHandler(async (req, res) => {
       { new: true, session }
     ).select('-password');
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     await session.commitTransaction();
     session.endSession();
 
@@ -934,6 +965,23 @@ router.post('/upgrade', authenticateToken, asyncHandler(async (req, res) => {
       { new: true, session }
     ).select('-password');
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     await session.commitTransaction();
     session.endSession();
 
@@ -1031,6 +1079,23 @@ router.post('/renew', authenticateToken, asyncHandler(async (req, res) => {
       { new: true, session }
     ).select('-password');
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     await session.commitTransaction();
     session.endSession();
 
@@ -1076,6 +1141,23 @@ router.post('/auto-renew', authenticateToken, asyncHandler(async (req, res) => {
     { new: true }
   ).select('-password');
 
+  // Calculate if user should be active based on profile completeness
+  const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+  // Update isActive if it has changed (avoid unnecessary DB writes)
+  if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+    updatedUser.isActive = shouldBeActive;
+    await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+  }
+
+  // If user manually deactivated their account, keep it deactivated
+  if (updatedUser.isDeactivated) {
+    updatedUser.isActive = false;
+    if (updatedUser.isActive !== false) {
+      await updatedUser.save();
+    }
+  }
+
   res.json({
     success: true,
     message: `Auto-renew ${enabled ? 'enabled' : 'disabled'}`,
@@ -1109,6 +1191,23 @@ router.post('/cancel', authenticateToken, asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select('-password');
+
+  // Calculate if user should be active based on profile completeness
+  const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+  // Update isActive if it has changed (avoid unnecessary DB writes)
+  if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+    updatedUser.isActive = shouldBeActive;
+    await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+  }
+
+  // If user manually deactivated their account, keep it deactivated
+  if (updatedUser.isDeactivated) {
+    updatedUser.isActive = false;
+    if (updatedUser.isActive !== false) {
+      await updatedUser.save();
+    }
+  }
 
   res.json({
     success: true,
@@ -1269,6 +1368,23 @@ router.put('/location', authenticateToken, asyncHandler(async (req, res) => {
       }
     ).select('-password');
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
@@ -1324,7 +1440,7 @@ router.put('/location', authenticateToken, asyncHandler(async (req, res) => {
 //7=================== CONTACT DETAILS
 // Update contact information
 router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
-  const { phoneNumber, hasWhatsApp, prefersCall, telegramLink, onlyFansLink } = req.body;
+  const { phoneNumber, secondaryPhone, hasWhatsApp, prefersCall, telegramLink, onlyFansLink } = req.body;
 
   const user = req.user;
   const userType = req.userType;
@@ -1345,7 +1461,6 @@ router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
     });
   }
 
-  // Validate phone number format (Kenyan format)
   // Validate phone number format (Kenyan format)
   const phoneRegex = /^(?:254|\+254|0)?(7\d{8}|1\d{8})$/;
   const cleanedPhone = phoneNumber.trim().replace(/\s+/g, '');
@@ -1413,6 +1528,22 @@ router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
       updateData['contact.onlyFansLink'] = null;
     }
 
+    // Handle secondary phone (only for spas)
+    if (userType === "spa" && secondaryPhone && secondaryPhone.trim()) {
+      const cleanedSecondary = secondaryPhone.trim().replace(/\s+/g, '');
+      if (!phoneRegex.test(cleanedSecondary)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a valid secondary phone number'
+        });
+      }
+      const formattedSecondary = cleanedSecondary.replace(phoneRegex, '254$1');
+      updateData['contact.secondaryPhone'] = formattedSecondary;
+    } else if (userType === "spa") {
+      updateData['contact.secondaryPhone'] = null;
+    }
+
+
     const updatedUser = await Model.findByIdAndUpdate(
       user._id,
       { $set: updateData },
@@ -1421,6 +1552,23 @@ router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
         runValidators: true
       }
     ).select('-password');
+
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -1441,6 +1589,7 @@ router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
       telegramLink: updatedUser.contact?.telegramLink || '',
       onlyFansLink: updatedUser.contact?.onlyFansLink || '',
       isPhoneVerified: updatedUser.contact?.isPhoneVerified || false,
+      secondaryPhone: updatedUser.contact?.secondaryPhone || '',
       // Include other fields that might be needed by frontend
       ...(updatedUser.profileImage && { profileImage: updatedUser.profileImage }),
       ...(updatedUser.wallet && { wallet: updatedUser.wallet }),
@@ -1480,7 +1629,7 @@ router.put('/contact', authenticateToken, asyncHandler(async (req, res) => {
 
 
 
-//8=================== SERIVICES
+//8=================== SERVICES
 // Add batch services
 router.post('/services/batch', authenticateToken, upload.any(), asyncHandler(async (req, res) => {
   const user = req.user;
@@ -1594,6 +1743,23 @@ router.post('/services/batch', authenticateToken, upload.any(), asyncHandler(asy
 
       await session.commitTransaction();
       session.endSession();
+
+      // Calculate if user should be active based on profile completeness
+      const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+      // Update isActive if it has changed (avoid unnecessary DB writes)
+      if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+        updatedUser.isActive = shouldBeActive;
+        await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+      }
+
+      // If user manually deactivated their account, keep it deactivated
+      if (updatedUser.isDeactivated) {
+        updatedUser.isActive = false;
+        if (updatedUser.isActive !== false) {
+          await updatedUser.save();
+        }
+      }
 
       // Get the newly added services (last n services)
       const addedServices = updatedUser.services.slice(-newServices.length);
@@ -1720,6 +1886,23 @@ router.put('/services/:serviceId', authenticateToken, upload.single('image'), as
 
     const updatedService = updatedUser.services.id(serviceId);
 
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
+
     res.json({
       success: true,
       message: 'Service updated successfully',
@@ -1786,6 +1969,23 @@ router.delete('/services/:serviceId', authenticateToken, asyncHandler(async (req
       { $pull: { services: { _id: serviceId } } },
       { new: true }
     ).select('-password');
+
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
 
     res.json({
       success: true,
@@ -1862,6 +2062,23 @@ router.patch('/services/:serviceId/status', authenticateToken, asyncHandler(asyn
       },
       { new: true }
     ).select('-password');
+
+    // Calculate if user should be active based on profile completeness
+    const shouldBeActive = calculateIsActive(updatedUser, userType);
+
+    // Update isActive if it has changed (avoid unnecessary DB writes)
+    if (updatedUser.isActive !== shouldBeActive && !updatedUser.isDeactivated) {
+      updatedUser.isActive = shouldBeActive;
+      await updatedUser.save({ validateBeforeSave: false }); // Skip validation
+    }
+
+    // If user manually deactivated their account, keep it deactivated
+    if (updatedUser.isDeactivated) {
+      updatedUser.isActive = false;
+      if (updatedUser.isActive !== false) {
+        await updatedUser.save();
+      }
+    }
 
     const updatedService = updatedUser.services.id(serviceId);
 
